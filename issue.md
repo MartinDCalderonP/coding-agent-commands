@@ -29,7 +29,7 @@ If that branch already exists, append a short disambiguating suffix derived from
 ## After implementing
 
 Before declaring done:
-- Scan all new/modified code for TS errors, ESLint violations, and Sonar smells. Fix any found.
+- Scan all new/modified code for TS errors, ESLint violations, and Sonar smells. Also verify the changes comply with the rules in the active CLAUDE.md files (global and project-level). Fix any violations found.
 - Check coverage on new code. If below 80%, add unit tests until it meets the threshold. If above, leave it.
 - Run related tests again to confirm green.
 

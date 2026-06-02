@@ -36,7 +36,7 @@ When the user says to proceed with a block:
 
 - Touch the minimum code required.
 - **Do NOT commit or push.** The user supervises all git operations.
-- After applying fixes: scan new/modified code for TS errors, ESLint violations, and Sonar smells introduced by the fix. Correct them before reporting done.
+- After applying fixes: scan new/modified code for TS errors, ESLint violations, and Sonar smells introduced by the fix. Also verify the changes comply with the rules in the active CLAUDE.md files (global and project-level). Correct any violations before reporting done.
 - Run only the tests related to the changed files and confirm they pass.
 
 ## After the user pushes the full round
@@ -47,17 +47,36 @@ Once the user confirms they have pushed all the commits for this round:
 
 1. Fetch open review thread IDs:
    ```graphql
-   query { repository(owner: OWNER, name: REPO) { pullRequest(number: PR) {
-     reviewThreads(first: 100) { nodes { id isResolved
-       comments(first: 1) { nodes { author { login } body } }
-     }}
-   }}}
+   query {
+     repository(owner: OWNER, name: REPO) {
+       pullRequest(number: PR) {
+         reviewThreads(first: 100) {
+           nodes {
+             id
+             isResolved
+             comments(first: 1) {
+               nodes {
+                 author {
+                   login
+                 }
+                 body
+               }
+             }
+           }
+         }
+       }
+     }
+   }
    ```
 2. For each unresolved bot thread addressed in this round:
    ```graphql
-   mutation { resolveReviewThread(input: { threadId: "THREAD_ID" }) {
-     thread { isResolved }
-   }}
+   mutation {
+     resolveReviewThread(input: { threadId: "THREAD_ID" }) {
+       thread {
+         isResolved
+       }
+     }
+   }
    ```
 
 **Human comments:** for each one addressed in this round, draft a friendly and collaborative reply and present it to the user for approval. Do not post anything until approved. Once approved, post the reply — but **do not mark the thread as resolved** unless the user explicitly says to, since the conversation may continue.
@@ -67,12 +86,14 @@ Once the user confirms they have pushed all the commits for this round:
 This is the terminal state of the entire iterative process — reached after all rounds of comments have been worked through and nothing actionable remains. When every remaining comment is stale, out of scope, or the user decides not to act on it:
 
 **Bot comments:**
+
 1. Reply with a concise technical justification for not acting on it.
    - Inline: `gh api --method POST repos/{OWNER}/{REPO}/pulls/{PR}/comments/{comment_id}/replies -f body="..."`
    - General: `gh api --method POST repos/{OWNER}/{REPO}/issues/{PR}/comments -f body="..."`
 2. Mark the thread as resolved.
 
 **Human comments:**
+
 1. Draft a friendly, collaborative reply explaining why no action was taken and present it to the user for approval. Do not post until approved.
 2. Once approved, post the reply. Mark as resolved only if the user explicitly says to.
 
